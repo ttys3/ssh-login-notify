@@ -7,6 +7,8 @@
 
 // /etc/pam.d/sshd
 // session optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY=xxx MAIL_FROM=xx MAIL_TO=xx /usr/local/bin/ssh-login-notify
+
+// with selinux: chcon -t bin_t /usr/local/bin/ssh-login-notify
 package main
 
 import (
@@ -67,7 +69,10 @@ func NewV3MailInit(from *mail.Email, subject string, content ...*mail.Content) *
 }
 
 func main() {
-
+	// skip close_session
+	if PAM.PAM_TYPE == pam.PAM_TYPE_CLOSE_SESSION {
+		os.Exit(0)
+	}
 	subject := fmt.Sprintf("%s login on %s for account %s", PAM.PAM_SERVICE, Hostname, PAM.PAM_USER)
 
 	t, err := template.New("ssh-notify").Parse(mailTmpl)

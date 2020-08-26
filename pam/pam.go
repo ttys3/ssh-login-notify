@@ -18,8 +18,18 @@ type PAMEnv struct {
 	PAM_SERVICE string
 	PAM_TTY string
 	PAM_USER string
-	PAM_TYPE string
+	PAM_TYPE PAMType
 }
+
+type PAMType string
+
+const (
+	PAM_TYPE_ACCOUNT PAMType = "account"
+	PAM_TYPE_AUTH PAMType = "auth"
+	PAM_TYPE_PASSWORD PAMType = "password"
+	PAM_TYPE_OPEN_SESSION PAMType = "open_session"
+	PAM_TYPE_CLOSE_SESSION PAMType = "close_session"
+)
 
 func NewPAMEnv() *PAMEnv {
 	return &PAMEnv{}
@@ -31,6 +41,6 @@ func (p *PAMEnv) Init() *PAMEnv {
 	p.PAM_SERVICE = os.Getenv("PAM_SERVICE")
 	p.PAM_TTY = os.Getenv("PAM_TTY")
 	p.PAM_USER = os.Getenv("PAM_USER")
-	p.PAM_TYPE = os.Getenv("PAM_TYPE")
+	p.PAM_TYPE = PAMType(os.Getenv("PAM_TYPE"))
 	return p
 }
