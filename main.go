@@ -39,8 +39,8 @@ func init() {
 	Hostname, _ = os.Hostname()
 }
 
-const mailTmpl = `
-	------------------------------------
+const mailTmpl = 
+`	------------------------------------
 	User       : {{ .PAM.PAM_USER }}
 	Remote User: {{ .PAM.PAM_RUSER }}
 	Remote Host: {{ .PAM.PAM_RHOST }}
