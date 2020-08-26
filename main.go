@@ -29,7 +29,7 @@ import (
 )
 
 var appName = "ssh-login-notify"
-var version = "1.0.0"
+var version = "1.0.1"
 
 var PAM *pam.PAMEnv
 var Hostname string
@@ -39,7 +39,7 @@ func init() {
 	Hostname, _ = os.Hostname()
 }
 
-const mailTmpl = 
+const mailTmpl =
 `	------------------------------------
 	User       : {{ .PAM.PAM_USER }}
 	Remote User: {{ .PAM.PAM_RUSER }}
@@ -70,11 +70,17 @@ func NewV3MailInit(from *mail.Email, subject string, content ...*mail.Content) *
 }
 
 func main() {
+	opType := "unkown"
 	// skip close_session
-	if PAM.PAM_TYPE == pam.PAM_TYPE_CLOSE_SESSION {
-		os.Exit(0)
+	switch PAM.PAM_TYPE {
+	case pam.PAM_TYPE_CLOSE_SESSION:
+		opType = "logout"
+	case pam.PAM_TYPE_OPEN_SESSION:
+		opType = "login"
+	case pam.PAM_TYPE_PASSWORD:
+		opType = "password"
 	}
-	subject := fmt.Sprintf("%s login on %s for account %s", PAM.PAM_SERVICE, Hostname, PAM.PAM_USER)
+	subject := fmt.Sprintf("%s %s on %s for account %s", PAM.PAM_SERVICE, opType, Hostname, PAM.PAM_USER)
 
 	tplData := MailVars{
 		PAM: PAM,
@@ -93,6 +99,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	plainText := buf.String()
+	log.Printf("mail content: %s", plainText)
+
+	// log but do not send mail on logout event
+	if PAM.PAM_TYPE == pam.PAM_TYPE_CLOSE_SESSION {
+		os.Exit(0)
+	}
 
 	mailFrom :=  os.Getenv("MAIL_FROM")
 	if mailFrom == "" {
@@ -108,9 +121,6 @@ func main() {
 	}
 
 	from := mail.NewEmail(mailFromName, mailFrom)
-
-	plainText := buf.String()
-	log.Printf("mail content: %s", plainText)
 
 	htmlText := fmt.Sprintf("<pre>%s</pre>", plainText)
 	plainTextContent := mail.NewContent("text/plain", plainText)
