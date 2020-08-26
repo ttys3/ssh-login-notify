@@ -3,10 +3,10 @@
 // https://linux.die.net/man/8/pam_exec
 
 // /etc/pam.d/passwd
-// password optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY="xxx" MAIL_FROM="" MAIL_TO="" /usr/local/bin/ssh-login-notify
+// password optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY=xxx MAIL_FROM=xx MAIL_TO=xx /usr/local/bin/ssh-login-notify
 
 // /etc/pam.d/sshd
-// session optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY="xxx" MAIL_FROM="" MAIL_TO="" /usr/local/bin/ssh-login-notify
+// session optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY=xxx MAIL_FROM=xx MAIL_TO=xx /usr/local/bin/ssh-login-notify
 package main
 
 import (
@@ -38,14 +38,14 @@ func init() {
 
 const mailTmpl = `
 	------------------------------------
-	User: {{ .PAM.PAM_USER }}
+	User       : {{ .PAM.PAM_USER }}
 	Remote User: {{ .PAM.PAM_RUSER }}
 	Remote Host: {{ .PAM.PAM_RHOST }}
-	Service: {{ .PAM.PAM_SERVICE }}
-	TTY: {{ .PAM.PAM_TTY }}
-	Type: {{ .PAM.PAM_TYPE }}
-	Date: {{ .Date }}
-	Hostname: {{ .Hostname }}
+	Service    : {{ .PAM.PAM_SERVICE }}
+	TTY        : {{ .PAM.PAM_TTY }}
+	Type       : {{ .PAM.PAM_TYPE }}
+	Date       : {{ .Date }}
+	Hostname   : {{ .Hostname }}
 	Reported By: {{ .AppName }} {{ .AppVer }} 
 	-------------------------------------
 `
@@ -131,6 +131,7 @@ func main() {
 		p.AddTos(toEmail)
 	}
 
+	// be aware of wrong key from env var (with quote) like `"SG.xxxxxx"`
 	sgApiKey := os.Getenv("SENDGRID_API_KEY")
 	if sgApiKey == "" {
 		log.Fatalf("empty SENDGRID_API_KEY")
