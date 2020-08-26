@@ -18,12 +18,15 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"text/template"
 	"time"
 
+	"github.com/oschwald/geoip2-golang"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
@@ -31,14 +34,25 @@ import (
 )
 
 var appName = "ssh-login-notify"
-var version = "1.0.3"
+var version = "1.0.4"
 
 var PAM *pam.PAMEnv
 var Hostname string
+var geoDb *geoip2.Reader
 
 func init() {
 	PAM = pam.NewPAMEnv().Init()
 	Hostname, _ = os.Hostname()
+	exePath, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exeDir := path.Dir(exePath)
+	dbPath := fmt.Sprintf("%s/GeoIP2-City.mmdb", exeDir)
+	geoDb, err = geoip2.Open(dbPath)
+	if err != nil {
+		log.Fatalf("open %s failed, err=%v", dbPath, err)
+	}
 }
 
 const mailTmpl =
@@ -48,7 +62,7 @@ const mailTmpl =
 	TTY        : {{ .PAM.PAM_TTY }}
 	User       : {{ .PAM.PAM_USER }}
 	Remote User: {{ .PAM.PAM_RUSER }}
-	Remote Host: {{ .PAM.PAM_RHOST }}
+	Remote Host: {{ .PAM.PAM_RHOST }} ({{ .GeoLocation }})
 	Date       : {{ .Date }}
 	Hostname   : {{ .Hostname }}
 	Reported By: {{ .AppName }} {{ .AppVer }} 
@@ -57,6 +71,7 @@ const mailTmpl =
 
 type MailVars struct {
 	PAM *pam.PAMEnv
+	GeoLocation string
 	AppName string
 	AppVer string
 	Hostname string
@@ -72,6 +87,8 @@ func NewV3MailInit(from *mail.Email, subject string, content ...*mail.Content) *
 }
 
 func main() {
+	defer geoDb.Close()
+
 	opType := "unkown"
 	// skip close_session
 	switch PAM.PAM_TYPE {
@@ -90,6 +107,19 @@ func main() {
 		AppVer: version,
 		Hostname: Hostname,
 		Date: time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	// geo
+	ip := net.ParseIP(PAM.PAM_RHOST)
+	record, err := geoDb.City(ip)
+	if err != nil {
+		log.Printf("get geo location failed, IP=%s err=%v", ip, err)
+	} else {
+		subdivisions := ""
+		for _, subdiv := range record.Subdivisions {
+			subdivisions += subdiv.Names["en"] + " "
+		}
+		tplData.GeoLocation = fmt.Sprintf("%s, %s, %s", record.Country.Names["en"], subdivisions, record.City.Names["en"])
 	}
 
 	t, err := template.New("ssh-notify").Parse(mailTmpl)
