@@ -3,10 +3,10 @@
 // https://linux.die.net/man/8/pam_exec
 
 // /etc/pam.d/passwd
-// password optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY="xxx" /usr/local/bin/ssh-login-notify
+// password optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY="xxx" MAIL_FROM="" MAIL_TO="" /usr/local/bin/ssh-login-notify
 
 // /etc/pam.d/sshd
-// session optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY="xxx" /usr/local/bin/ssh-login-notify
+// session optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY="xxx" MAIL_FROM="" MAIL_TO="" /usr/local/bin/ssh-login-notify
 package main
 
 import (
@@ -94,7 +94,13 @@ func main() {
 	if !strings.Contains(mailFrom, "@") {
 		log.Fatalf("invalid MAIL_FROM")
 	}
-	from := mail.NewEmail(appName, mailFrom)
+
+	mailFromName :=  os.Getenv("MAIL_FROM_NAME")
+	if mailFromName == "" {
+		mailFromName = appName
+	}
+
+	from := mail.NewEmail(mailFromName, mailFrom)
 
 	plainText := buf.String()
 	log.Printf("mail content: %s", plainText)
