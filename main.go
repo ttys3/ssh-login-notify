@@ -39,7 +39,7 @@ func init() {
 const mailTmpl = `
 	------------------------------------
 	User: {{ .PAM.PAM_USER }}
-	Remote User: {{ .PAM.PAM_RHOST }}
+	Remote User: {{ .PAM.PAM_RUSER }}
 	Remote Host: {{ .PAM.PAM_RHOST }}
 	Service: {{ .PAM.PAM_SERVICE }}
 	TTY: {{ .PAM.PAM_TTY }}
@@ -136,7 +136,7 @@ func main() {
 		log.Fatalf("empty SENDGRID_API_KEY")
 	}
 	message.AddPersonalizations(p)
-	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
+	client := sendgrid.NewSendClient(sgApiKey)
 	response, err := client.Send(message)
 
 	// https://sendgrid.api-docs.io/v3.0/how-to-use-the-sendgrid-v3-api/api-responses#status-codes
@@ -146,7 +146,7 @@ func main() {
 		if response.StatusCode == http.StatusAccepted {
 			log.Println("success")
 		} else {
-			log.Printf("failed with StatusCode=%d", response.StatusCode)
+			log.Printf("send failed, SENDGRID_API_KEY=%s StatusCode=%d response=%v", sgApiKey, response.StatusCode, response)
 		}
 	}
 }
