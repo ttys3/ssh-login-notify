@@ -31,7 +31,7 @@ import (
 )
 
 var appName = "ssh-login-notify"
-var version = "1.0.1"
+var version = "1.0.2"
 
 var PAM *pam.PAMEnv
 var Hostname string
