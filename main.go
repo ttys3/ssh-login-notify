@@ -8,8 +8,10 @@
 // /etc/pam.d/sshd
 // session optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY=xxx MAIL_FROM=xx MAIL_TO=xx /usr/local/bin/ssh-login-notify
 
-// fix perm: chmod a+rx /usr/local/bin/ssh-login-notify
-// with selinux: chcon -t bin_t /usr/local/bin/ssh-login-notify
+// debug
+// session optional pam_exec.so debug log=/tmp/sshd.log seteuid /usr/bin/env SENDGRID_API_KEY=xxx MAIL_FROM=xx MAIL_TO=xx /usr/local/bin/ssh-login-notify
+
+// fix perm with selinux: chmod a+rx /usr/local/bin/ssh-login-notify && chcon -t bin_t /usr/local/bin/ssh-login-notify
 package main
 
 import (
@@ -100,10 +102,11 @@ func main() {
 		panic(err)
 	}
 	plainText := buf.String()
-	log.Printf("mail content: %s", plainText)
+	log.Printf("mail content: \n%s", plainText)
 
 	// log but do not send mail on logout event
 	if PAM.PAM_TYPE == pam.PAM_TYPE_CLOSE_SESSION {
+		log.Printf("mail send disabled for %s", string(PAM.PAM_TYPE))
 		os.Exit(0)
 	}
 
@@ -164,7 +167,7 @@ func main() {
 		log.Printf("request failed, err=%v", err)
 	} else {
 		if response.StatusCode == http.StatusAccepted {
-			log.Println("success")
+			log.Println("mail send success")
 		} else {
 			log.Printf("send failed, SENDGRID_API_KEY=%s StatusCode=%d response=%v", sgApiKey, response.StatusCode, response)
 		}
