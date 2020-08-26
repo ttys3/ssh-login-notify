@@ -8,6 +8,7 @@
 // /etc/pam.d/sshd
 // session optional pam_exec.so seteuid /usr/bin/env SENDGRID_API_KEY=xxx MAIL_FROM=xx MAIL_TO=xx /usr/local/bin/ssh-login-notify
 
+// fix perm: chmod a+rx /usr/local/bin/ssh-login-notify
 // with selinux: chcon -t bin_t /usr/local/bin/ssh-login-notify
 package main
 
@@ -75,16 +76,17 @@ func main() {
 	}
 	subject := fmt.Sprintf("%s login on %s for account %s", PAM.PAM_SERVICE, Hostname, PAM.PAM_USER)
 
-	t, err := template.New("ssh-notify").Parse(mailTmpl)
-	if err != nil {
-		panic(err)
-	}
 	tplData := MailVars{
 		PAM: PAM,
 		AppName: appName,
 		AppVer: version,
 		Hostname: Hostname,
 		Date: time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	t, err := template.New("ssh-notify").Parse(mailTmpl)
+	if err != nil {
+		panic(err)
 	}
 	var buf bytes.Buffer
 	err = t.Execute(&buf, tplData)
@@ -109,9 +111,11 @@ func main() {
 
 	plainText := buf.String()
 	log.Printf("mail content: %s", plainText)
-	plainTextContent := mail.NewContent("text/plain", plainText)
-	message := NewV3MailInit(from, subject, plainTextContent)
 
+	htmlText := fmt.Sprintf("<pre>%s</pre>", plainText)
+	plainTextContent := mail.NewContent("text/plain", plainText)
+	htmlTextContent := mail.NewContent("text/html", htmlText)
+	message := NewV3MailInit(from, subject, plainTextContent, htmlTextContent)
 
 	mailTo :=  os.Getenv("MAIL_TO")
 	if mailTo == "" {
