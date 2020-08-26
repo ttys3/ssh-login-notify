@@ -43,12 +43,12 @@ func init() {
 
 const mailTmpl =
 `	------------------------------------
+	Service    : {{ .PAM.PAM_SERVICE }}
+	Type       : {{ .PAM.PAM_TYPE }}
+	TTY        : {{ .PAM.PAM_TTY }}
 	User       : {{ .PAM.PAM_USER }}
 	Remote User: {{ .PAM.PAM_RUSER }}
 	Remote Host: {{ .PAM.PAM_RHOST }}
-	Service    : {{ .PAM.PAM_SERVICE }}
-	TTY        : {{ .PAM.PAM_TTY }}
-	Type       : {{ .PAM.PAM_TYPE }}
 	Date       : {{ .Date }}
 	Hostname   : {{ .Hostname }}
 	Reported By: {{ .AppName }} {{ .AppVer }} 
