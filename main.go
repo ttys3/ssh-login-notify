@@ -31,7 +31,7 @@ import (
 )
 
 var appName = "ssh-login-notify"
-var version = "1.0.2"
+var version = "1.0.3"
 
 var PAM *pam.PAMEnv
 var Hostname string
@@ -125,7 +125,7 @@ func main() {
 
 	from := mail.NewEmail(mailFromName, mailFrom)
 
-	htmlText := fmt.Sprintf("<pre>%s</pre>", plainText)
+	htmlText := fmt.Sprintf("<pre>\n&nbsp;&nbsp;&nbsp;&nbsp;%s\n</pre>", plainText)
 	plainTextContent := mail.NewContent("text/plain", plainText)
 	htmlTextContent := mail.NewContent("text/html", htmlText)
 	message := NewV3MailInit(from, subject, plainTextContent, htmlTextContent)
