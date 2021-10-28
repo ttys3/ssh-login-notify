@@ -56,17 +56,17 @@ func init() {
 }
 
 const mailTmpl =
-`	------------------------------------
-	Service    : {{ .PAM.PAM_SERVICE }}
-	Type       : {{ .PAM.PAM_TYPE }}
-	TTY        : {{ .PAM.PAM_TTY }}
-	User       : {{ .PAM.PAM_USER }}
-	Remote User: {{ .PAM.PAM_RUSER }}
-	Remote Host: {{ .PAM.PAM_RHOST }} ({{ .GeoLocation }})
-	Date       : {{ .Date }}
-	Hostname   : {{ .Hostname }}
-	Reported By: {{ .AppName }} {{ .AppVer }} 
-	-------------------------------------
+`  ------------------------------------
+  Service    : {{ .PAM.PAM_SERVICE }}
+  Type       : {{ .PAM.PAM_TYPE }}
+  TTY        : {{ .PAM.PAM_TTY }}
+  User       : {{ .PAM.PAM_USER }}
+  Remote User: {{ .PAM.PAM_RUSER }}
+  Remote Host: {{ .PAM.PAM_RHOST }} ({{ .GeoLocation }})
+  Date       : {{ .Date }}
+  Hostname   : {{ .Hostname }}
+  Reported By: {{ .AppName }} {{ .AppVer }} 
+  ------------------------------------
 `
 
 type MailVars struct {
@@ -155,7 +155,7 @@ func main() {
 
 	from := mail.NewEmail(mailFromName, mailFrom)
 
-	htmlText := fmt.Sprintf("<pre>\n&nbsp;&nbsp;&nbsp;&nbsp;%s\n</pre>", plainText)
+	htmlText := fmt.Sprintf("<pre>\n%s\n</pre>", plainText)
 	plainTextContent := mail.NewContent("text/plain", plainText)
 	htmlTextContent := mail.NewContent("text/html", htmlText)
 	message := NewV3MailInit(from, subject, plainTextContent, htmlTextContent)
